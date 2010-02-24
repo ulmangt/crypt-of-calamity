@@ -9,11 +9,14 @@
 (def dirs { :up    [ 0  1]
             :down  [ 0 -1]
             :left  [-1  0]
-            :right [ 0 -1]})
+            :right [ 1  0]})
 
 (def dir-keys { VK_UP     :up
                VK_DOWN   :down
                VK_LEFT   :left
                VK_RIGHT  :right })
+
+(defn add-points [& pts]
+  (vec (apply map + pts)))
 
 
