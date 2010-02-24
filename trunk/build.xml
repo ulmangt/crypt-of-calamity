@@ -64,4 +64,12 @@
       </classpath>
     </java>
   </target>
+
+  <target name="run-repl" depends="compile">
+    <java classname="clojure.main" fork="true">
+      <classpath>
+        <path refid="cc.classpath"/>
+      </classpath>
+    </java>
+  </target>
 </project>
