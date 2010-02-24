@@ -4,6 +4,7 @@
            (java.awt.event ActionListener KeyListener))
   (:use clojure.contrib.import-static
         [clojure.contrib.seq-utils :only (includes?)]))
+
 (import-static java.awt.event.KeyEvent VK_LEFT VK_RIGHT VK_UP VK_DOWN)
 
 (def rnd (new java.util.Random (. java.lang.System currentTimeMillis)))
@@ -51,6 +52,8 @@
 (defn add-points [& pts]
   (vec (apply map + pts)))
 
+(defstruct location :point :content)
+
 (defstruct character :name :class :location :stats)
 
 (defn create-character [name class]
@@ -59,5 +62,17 @@
                         :location [0 0] 
                         :stats (roll-stats class)))
 
+; creates (* x y) points ranging from [0 0] to [(- x 1) (- y 1)]
+(defn pairs [x y] 
+  (map vec 
+       (partition 2 
+                  (interleave (apply concat
+                                     (map #(repeat y %)
+                                           (range x)))
+                              (take (* x y) (cycle (range y)))))))
 
+; creates a silly dungeon which is just a n x m room
+(defn create-dungeon
+  ([width height] (pairs width height))
+  ([] (create-dungeon 10 10)))
 
