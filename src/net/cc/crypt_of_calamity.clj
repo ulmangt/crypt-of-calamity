@@ -39,9 +39,13 @@
              :charisma
              :luck))
 
+; an object in the dungeon (item, monster, wall, door...)
+; type - keyword
+(defstruct thing :type)
+
 ; coords - point - a two element [x y] vector
-; contant - list - a list of things in the location
-(defstruct location :coords :content)
+; things - list - a list of things in the location
+(defstruct location :coords :things)
 
 ; name - string - the character's name
 ; class - keyword - from the classes list
@@ -79,8 +83,13 @@
                                            (range x)))
                               (take (* x y) (cycle (range y)))))))
 
-; creates a silly dungeon which is just a n x m room
-(defn create-dungeon
-  ([width height] (pairs width height))
-  ([] (create-dungeon 10 10)))
+; creates a rectangular room - represented by a list of locations
+; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
+(defn create-room
+  ([width height] (map #(let [x (first %) y (second %)]
+                             (if (or (= 0 x) (= 0 y) (= (+ width 1) x) (= (+ height 1) y))
+                                  (struct-map location :coords % :things '(:wall))
+                                  (struct-map location :coords %)))
+                        (pairs (+ 2 width) (+ 2 height))))
+  ([] (create-room 10 10)))
 
