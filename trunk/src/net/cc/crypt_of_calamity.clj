@@ -91,13 +91,25 @@
                                            (range x)))
                               (take (* x y) (cycle (range y)))))))
 
+(defn create-room
+  ([width height] (pairs width height)))
+
 ; creates a rectangular room - represented by a list of locations
 ; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
-(defn create-room
+(defn create-room-with-walls
   ([width height] (map #(let [x (first %) y (second %)]
                              (if (or (= 0 x) (= 0 y) (= (+ width 1) x) (= (+ height 1) y))
-                                  (struct-map location :coords % :things '(:wall))
-                                  (struct-map location :coords %)))
-                        (pairs (+ 2 width) (+ 2 height))))
-  ([] (create-room 10 10)))
+                                  (struct-map location :coords % :things #{:wall})
+                                  (struct-map location :coords % :things #{})))
+                        (create-room (+ 2 width) (+ 2 height))))
+  ([] (create-room-with-walls 10 10)))
+
+(defn wall? [{:keys [things]}] (:wall things))
+
+(defn get-random-element [list]
+  (last (take (+ (. rnd nextInt (count list)) 1) list)))
+
+(defn rand-wall [dungeon]
+  (get-random-element (filter wall? dungeon)))
+
 
