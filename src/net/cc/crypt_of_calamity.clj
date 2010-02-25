@@ -74,8 +74,16 @@
                         :location [0 0] 
                         :stats (roll-stats class)))
 
+(defn pair-seq [max-x] 
+  (iterate (fn [[x y]] (if (< x (- max-x 1))
+                           [(+ x 1) y]
+                           [0 (+ y 1)]))
+           [0 0]))
+
 ; creates (* x y) points ranging from [0 0] to [(- x 1) (- y 1)]
-(defn pairs [x y] 
+(defn pairs [x y] (take (* x y) (pair-seq x)))
+
+(defn pairs-old [x y] 
   (map vec 
        (partition 2 
                   (interleave (apply concat
