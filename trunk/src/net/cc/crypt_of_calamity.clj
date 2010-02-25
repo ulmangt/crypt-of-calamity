@@ -83,6 +83,19 @@
 ; creates (* x y) points ranging from [0 0] to [(- x 1) (- y 1)]
 (defn pairs [x y] (take (* x y) (pair-seq x)))
 
+(defn flatten [l]
+  (let [s? #(instance? clojure.lang.Sequential %)]
+    (filter (complement s?) (tree-seq s? seq l))))
+
+(defn element-list [n l]
+  (map #(list n %) l))
+
+(defn list-list [l1 l2]
+  (apply concat (map #(element-list % l2) l1)))
+
+(defn cross-join [& lists]
+  (map flatten (reduce list-list lists)))
+
 (defn pairs-old [x y] 
   (map vec 
        (partition 2 
