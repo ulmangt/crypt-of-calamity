@@ -92,7 +92,7 @@
   (map flatten (reduce list-list lists)))
 
 (defn create-room
-  ([width height] (cross-join (range width) (range height))))
+  ([width height] (map vec (cross-join (range width) (range height)))))
 
 ; creates a rectangular room - represented by a list of locations
 ; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
@@ -104,9 +104,22 @@
                         (create-room (+ 2 width) (+ 2 height))))
   ([] (create-room-with-walls 10 10)))
 
-; test whether a room is a wall
+; test whether a location is a wall
 ; i.e. whether its :things set contains a :wall
 (defn wall? [{:keys [things]}] (:wall things))
+
+; tests wheather a location is at the given coords
+(defn at-coords? [query-coords {:keys [coords]}]
+  (= query-coords coords))
+
+; returns the location in a dungeon matching the given coords
+; example: (get-location [1 1] dungeon)
+(defn get-location [coords dungeon]
+  (filter #(at-coords? coords %) dungeon))
+
+;(defn edge? [{:keys [coords]}]
+;  (let [x (first coords) y (second coords)]
+
 
 ; returns a random element from list
 (defn get-random-element [list]
