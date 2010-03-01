@@ -74,38 +74,25 @@
                         :location [0 0] 
                         :stats (roll-stats class)))
 
-(defn pair-seq [max-x] 
-  (iterate (fn [[x y]] (if (< x (- max-x 1))
-                           [(+ x 1) y]
-                           [0 (+ y 1)]))
-           [0 0]))
-
-; creates (* x y) points ranging from [0 0] to [(- x 1) (- y 1)]
-(defn pairs [x y] (take (* x y) (pair-seq x)))
-
 (defn flatten [l]
   (let [s? #(instance? clojure.lang.Sequential %)]
     (filter (complement s?) (tree-seq s? seq l))))
 
+; helper function for cross-join
+; example: (element-list 1 '(1 2 3)) -> ((1 1) (1 2) (1 3))
 (defn element-list [n l]
   (map #(list n %) l))
 
+; helper function for cross-join
+; example: (list-list '(1 2) '(1 2)) -> ((1 1) (1 2) (2 1) (2 2))
 (defn list-list [l1 l2]
   (apply concat (map #(element-list % l2) l1)))
 
 (defn cross-join [& lists]
   (map flatten (reduce list-list lists)))
 
-(defn pairs-old [x y] 
-  (map vec 
-       (partition 2 
-                  (interleave (apply concat
-                                     (map #(repeat y %)
-                                           (range x)))
-                              (take (* x y) (cycle (range y)))))))
-
 (defn create-room
-  ([width height] (pairs width height)))
+  ([width height] (cross-join (range width) (range height))))
 
 ; creates a rectangular room - represented by a list of locations
 ; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
@@ -117,11 +104,15 @@
                         (create-room (+ 2 width) (+ 2 height))))
   ([] (create-room-with-walls 10 10)))
 
+; test whether a room is a wall
+; i.e. whether its :things set contains a :wall
 (defn wall? [{:keys [things]}] (:wall things))
 
+; returns a random element from list
 (defn get-random-element [list]
   (last (take (+ (. rnd nextInt (count list)) 1) list)))
 
+; returns a random wall location from a dungeon
 (defn rand-wall [dungeon]
   (get-random-element (filter wall? dungeon)))
 
