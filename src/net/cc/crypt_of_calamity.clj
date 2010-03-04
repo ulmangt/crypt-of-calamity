@@ -92,7 +92,11 @@
   (map flatten (reduce list-list lists)))
 
 (defn create-room
-  ([width height] (map #(struct-map location :coords % :things #{}) (cross-join (range width) (range height)))))
+  ([width height] (create-room 0 0 width height))
+  ([[x y] width height]
+    (map #(struct-map location :coords % :things #{})
+          (cross-join (range x (+ width x))
+                      (range y (+ height y))))))
 
 ; creates a rectangular room - represented by a list of locations
 ; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
@@ -120,10 +124,11 @@
 (defn has-location? [coords dungeon]
   (not (empty? (get-location coords dungeon))))
 
-;
-;
 (defn edges [coords dungeon]
   (filter #(not (has-location? (add-points coords (% dirs)) dungeon)) (keys dirs)))
+
+(defn edge? [coords dungeon]
+  (not (empty? (edges coords dungeon))))
 
 ; returns a random element from list
 (defn get-random-element [list]
@@ -133,4 +138,5 @@
 (defn rand-wall [dungeon]
   (get-random-element (filter wall? dungeon)))
 
-
+(defn add-room [dungeon width height]
+  (concat dungeon (create-room (get-random-element (filter edge? (map :coords dungeon))) width height)))
