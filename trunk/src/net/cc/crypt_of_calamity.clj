@@ -92,7 +92,7 @@
   (map flatten (reduce list-list lists)))
 
 (defn create-room
-  ([width height] (create-room 0 0 width height))
+  ([width height] (create-room [0 0] width height))
   ([[x y] width height]
     (map #(struct-map location :coords % :things #{})
           (cross-join (range x (+ width x))
