@@ -1,4 +1,4 @@
-(ns crypt-of-calamity.core)
+(ns crypt-of-calamity.core
   (:import (java.awt Color Dimension Graphics)
            (javax.swing JPanel JFrame Timer JOptionPane)
            (java.awt.event ActionListener KeyListener MouseListener))
@@ -75,10 +75,6 @@
                         :class class 
                         :location [0 0] 
                         :stats (roll-stats class)))
-
-(defn flatten [l]
-  (let [s? #(instance? clojure.lang.Sequential %)]
-    (filter (complement s?) (tree-seq s? seq l))))
 
 (defn element-list
 	"helper function for cross-join example: (element-list 1 '(1 2 3)) -> ((1 1) (1 2) (1 3))"
