@@ -1,4 +1,4 @@
-(ns net.cc.crypt-of-calamity
+(ns crypt-of-calamity.core)
   (:import (java.awt Color Dimension Graphics)
            (javax.swing JPanel JFrame Timer JOptionPane)
            (java.awt.event ActionListener KeyListener MouseListener))
@@ -149,12 +149,6 @@
 
 
 
-
-
-
-
-
-;(def dungeon (atom 
 
 (defn render [ #^Graphics g w h ]
 	(doto g
