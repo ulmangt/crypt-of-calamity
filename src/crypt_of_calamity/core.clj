@@ -110,6 +110,12 @@
   (let [locations-list (create-locations width height)]
     (apply hash-map (interleave (map :coords locations-list)  locations-list))))
 
+(defn add-location [dungeon location]
+  (assoc dungeon (:coords location) location))
+
+(defn add-coords [dungeon coords]
+  (assoc dungeon coords (struct-map location :coords coords :things #{})))
+
 (defn add-thing [dungeon coords thing]
   (let [location (dungeon coords)
         things (:things location)
@@ -118,7 +124,7 @@
     (assoc dungeon coords new-location)))
 
 (defn fill-with-walls [dungeon]
-  (loop [coords (dbg (keys dungeon))
+  (loop [coords (keys dungeon)
          new-dungeon dungeon]
     (if coords
       (let [coord (first coords)
@@ -134,13 +140,13 @@
 
 ; creates a rectangular room - represented by a list of locations
 ; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
-(defn create-room-with-walls
-  ([width height] (map #(let [x (first %) y (second %)]
-                             (if (or (= 0 x) (= 0 y) (= (+ width 1) x) (= (+ height 1) y))
-                                  (struct-map location :coords % :things #{:wall})
-                                  (struct-map location :coords % :things #{})))
-                        (cross-join (range (+ 2 width)) (range (+ 2 height)))))
-  ([] (create-room-with-walls 10 10)))
+;(defn create-room-with-walls
+;  ([width height] (map #(let [x (first %) y (second %)]
+;                             (if (or (= 0 x) (= 0 y) (= (+ width 1) x) (= (+ height 1) y))
+;                                  (struct-map location :coords % :things #{:wall})
+;                                  (struct-map location :coords % :things #{})))
+;                        (cross-join (range (+ 2 width)) (range (+ 2 height)))))
+;  ([] (create-room-with-walls 10 10)))
 
 ; test whether a location is a wall
 ; i.e. whether its :things set contains a :wall
@@ -148,15 +154,13 @@
 
 ; tests whether a location is at the given coords
 (defn at-coords? [query-coords {:keys [coords]}]
-  (= query-coords coords))
+  (reduce (fn [a b] (and a b)) true (map = query-coords coords)))
 
-; returns the location in a dungeon matching the given coords
-; example: (get-location [1 1] dungeon)
 (defn get-location [coords dungeon]
-  (filter #(at-coords? coords %) dungeon))
+  (dungeon coords))
 
 (defn has-location? [coords dungeon]
-  (not (empty? (get-location coords dungeon))))
+  (dungeon coords))
 
 (defn edges [coords dungeon]
   (filter #(not (has-location? (add-points coords (% dirs)) dungeon)) (keys dirs)))
@@ -166,11 +170,13 @@
 
 ; returns a random element from list
 (defn get-random-element [list]
-  (last (take (+ (. rnd nextInt (count list)) 1) list)))
+  (if (empty? list)
+    nil
+    (last (take (+ (. rnd nextInt (count list)) 1) list))))
 
 ; returns a random wall location from a dungeon
 (defn rand-wall [dungeon]
-  (get-random-element (filter wall? dungeon)))
+  (get-random-element (filter wall? (vals dungeon))))
 
 (defn add-room [dungeon width height]
   (concat dungeon 
