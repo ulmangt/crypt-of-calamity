@@ -9,6 +9,12 @@
 
 (def rnd (new java.util.Random (. java.lang.System currentTimeMillis)))
 
+;;debugging parts of expressions
+(defmacro dbg [x]
+  `(let [x# ~x]
+    (println "dbg:" '~x "=" x#)
+    x#))
+
 (def dirs { :up    [ 0  1]
             :down  [ 0 -1]
             :left  [-1  0]
@@ -76,6 +82,11 @@
                         :location [0 0] 
                         :stats (roll-stats class)))
 
+
+
+
+
+
 (defn element-list
 	"helper function for cross-join example: (element-list 1 '(1 2 3)) -> ((1 1) (1 2) (1 3))"
 	[n l]
@@ -88,12 +99,38 @@
 (defn cross-join [& lists]
   (map flatten (reduce list-list lists)))
 
-(defn create-room
-  ([width height] (create-room [0 0] width height))
+(defn create-locations
+  ([width height] (create-locations [0 0] width height))
   ([[x y] width height]
     (map #(struct-map location :coords % :things #{})
           (cross-join (range x (+ width x))
                       (range y (+ height y))))))
+
+(defn index-locations [width height]
+  (let [locations-list (create-locations width height)]
+    (apply hash-map (interleave (map :coords locations-list)  locations-list))))
+
+(defn add-thing [dungeon coords thing]
+  (let [location (dungeon coords)
+        things (:things location)
+        new-things (conj things thing)
+        new-location (assoc location :things new-things)]
+    (assoc dungeon coords new-location)))
+
+(defn fill-with-walls [dungeon]
+  (loop [coords (dbg (keys dungeon))
+         new-dungeon dungeon]
+    (if coords
+      (let [coord (first coords)
+            location (new-dungeon coords)]
+        (recur (next coords) (add-thing new-dungeon coord :wall)))
+      new-dungeon)))
+
+
+
+
+
+
 
 ; creates a rectangular room - represented by a list of locations
 ; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
@@ -137,7 +174,7 @@
 
 (defn add-room [dungeon width height]
   (concat dungeon 
-          (create-room 
+          (create-locations 
             (get-random-element 
               (filter #(edge? % dungeon)
                       (map :coords dungeon)))
