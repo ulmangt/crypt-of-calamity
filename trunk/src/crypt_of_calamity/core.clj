@@ -3,6 +3,7 @@
            (javax.swing JPanel JFrame Timer JOptionPane)
            (java.awt.event ActionListener KeyListener MouseListener))
   (:use clojure.contrib.import-static
+        clojure.set
         [clojure.contrib.seq-utils :only (includes?)]))
 
 (import-static java.awt.event.KeyEvent VK_LEFT VK_RIGHT VK_UP VK_DOWN)
@@ -132,7 +133,6 @@
         (recur (next coords) (add-thing new-dungeon coord :wall)))
       new-dungeon)))
 
-
 ; test whether a location is a wall
 ; i.e. whether its :things set contains a :wall
 (defn wall? [{:keys [things]}] (:wall things))
@@ -144,29 +144,42 @@
     (reduce (fn [a b] (and a b)) true (map = query-coords coords))))
 
 ; get the location for a given set of coordinates in the dungeon
-(defn get-location [coords dungeon]
+(defn get-location [dungeon coords]
   (dungeon coords))
 
 ; test whether a given set of coordinates in the dungeon exists
-(defn has-location? [coords dungeon]
-  (dungeon coords))
+(defn has-location?
+  ([dungeon coords] (dungeon coords)))
+
+(defn has-thing?
+  ([dungeon coords thing] (has-thing? (get-location dungeon coords) thing))
+  ([location thing] (contains? (:things location) thing)))
+
+
+(defn blocked? [dungeon coords]
+  (let [location (get-location dungeon coords)]
+    (or (nil? location) (has-thing? dungeon coords :wall))))
+
+; return the set of directions which are blocked
+(defn edges [dungeon coords]
+  (filter #(not (has-location? dungeon (add-points coords (% dirs)))) (keys dirs)))
 
 ; return the set of directions which are not blocked
-(defn edges [coords dungeon]
-  (filter #(not (has-location? (add-points coords (% dirs)) dungeon)) (keys dirs)))
+(defn non-edges [dungeon coords]
+  (difference (keys dirs) (edges dungeon coords)))
 
 ; return whether the location at the specified coordinates is adjacent to any blocked locations
-(defn edge? [coords dungeon]
-  (not (empty? (edges coords dungeon))))
+(defn edge? [dungeon coords]
+  (not (empty? (edges dungeon coords))))
 
 ; returns which of the four locations adjacent to the given coordinate meet the specified predicate
-(defn filter-surrounding [coords dungeon predicate]
+(defn filter-surrounding [dungeon coords predicate]
   (filter predicate
           (map get-location
+               (repeat dungeon)
                (map add-points
                     (repeat coords)
-                    (vals dirs))
-               (repeat dungeon))))
+                    (vals dirs)))))
 
 ; returns a random element from list
 (defn get-random-element [list]
@@ -178,12 +191,13 @@
 (defn rand-wall [dungeon]
   (get-random-element (filter wall? (vals dungeon))))
 
+
 ;(defn tunnel [start-coord dungeon]
 ;  (loop [new-dungeon dungeon
 ;         tunnel-heads (list start-coord)
 ;         tunnel-head (first tunnel-heads)]
 ;    (if (not tunnel-head)
-;      
+;      (let [      
 ;      new-dungeon)))
 
 
