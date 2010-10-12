@@ -133,8 +133,58 @@
       new-dungeon)))
 
 
+; test whether a location is a wall
+; i.e. whether its :things set contains a :wall
+(defn wall? [{:keys [things]}] (:wall things))
 
+; tests whether a location is at the given coords
+(defn at-coords? [query-coords {:keys [coords]}]
+  (if (nil? coords)
+    nil
+    (reduce (fn [a b] (and a b)) true (map = query-coords coords))))
 
+; get the location for a given set of coordinates in the dungeon
+(defn get-location [coords dungeon]
+  (dungeon coords))
+
+; test whether a given set of coordinates in the dungeon exists
+(defn has-location? [coords dungeon]
+  (dungeon coords))
+
+; return the set of directions which are not blocked
+(defn edges [coords dungeon]
+  (filter #(not (has-location? (add-points coords (% dirs)) dungeon)) (keys dirs)))
+
+; return whether the location at the specified coordinates is adjacent to any blocked locations
+(defn edge? [coords dungeon]
+  (not (empty? (edges coords dungeon))))
+
+; returns which of the four locations adjacent to the given coordinate meet the specified predicate
+(defn filter-surrounding [coords dungeon predicate]
+  (filter predicate
+          (map get-location
+               (map add-points
+                    (repeat coords)
+                    (vals dirs))
+               (repeat dungeon))))
+
+; returns a random element from list
+(defn get-random-element [list]
+  (if (empty? list)
+    nil
+    (last (take (+ (. rnd nextInt (count list)) 1) list))))
+
+; returns a random wall location from a dungeon
+(defn rand-wall [dungeon]
+  (get-random-element (filter wall? (vals dungeon))))
+
+;(defn tunnel [start-coord dungeon]
+;  (loop [new-dungeon dungeon
+;         tunnel-heads (list start-coord)
+;         tunnel-head (first tunnel-heads)]
+;    (if (not tunnel-head)
+;      
+;      new-dungeon)))
 
 
 
@@ -148,43 +198,14 @@
 ;                        (cross-join (range (+ 2 width)) (range (+ 2 height)))))
 ;  ([] (create-room-with-walls 10 10)))
 
-; test whether a location is a wall
-; i.e. whether its :things set contains a :wall
-(defn wall? [{:keys [things]}] (:wall things))
 
-; tests whether a location is at the given coords
-(defn at-coords? [query-coords {:keys [coords]}]
-  (reduce (fn [a b] (and a b)) true (map = query-coords coords)))
-
-(defn get-location [coords dungeon]
-  (dungeon coords))
-
-(defn has-location? [coords dungeon]
-  (dungeon coords))
-
-(defn edges [coords dungeon]
-  (filter #(not (has-location? (add-points coords (% dirs)) dungeon)) (keys dirs)))
-
-(defn edge? [coords dungeon]
-  (not (empty? (edges coords dungeon))))
-
-; returns a random element from list
-(defn get-random-element [list]
-  (if (empty? list)
-    nil
-    (last (take (+ (. rnd nextInt (count list)) 1) list))))
-
-; returns a random wall location from a dungeon
-(defn rand-wall [dungeon]
-  (get-random-element (filter wall? (vals dungeon))))
-
-(defn add-room [dungeon width height]
-  (concat dungeon 
-          (create-locations 
-            (get-random-element 
-              (filter #(edge? % dungeon)
-                      (map :coords dungeon)))
-            width height)))
+;(defn add-room [dungeon width height]
+;  (concat dungeon 
+;          (create-locations 
+;            (get-random-element 
+;              (filter #(edge? % dungeon)
+;                      (map :coords dungeon)))
+;            width height)))
 
 
 
