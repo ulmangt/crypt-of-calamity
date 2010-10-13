@@ -21,6 +21,17 @@
             :left  [-1  0]
             :right [ 1  0]})
 
+(def opposite-dirs { :up    :down
+                     :down  :up
+                     :left  :right
+                     :right :left } )
+
+(def perp-dirs { :up    #{ :left :right }
+                 :down  #{ :left :right }
+                 :left  #{ :up   :down  }
+                 :right #{ :up   :down  } })
+
+
 (def dir-keys { VK_UP     :up
                VK_DOWN   :down
                VK_LEFT   :left
@@ -199,14 +210,41 @@
   (get-random-element (filter wall? (vals dungeon))))
 
 
-(defn tunnel [dungeon current-coord]
+; a predicate for use with tunnel
+(defn exists-and-blocked?
+  ([dungeon current-coord new-coord direction] (exists-and-blocked? dungeon new-coord))
+  ([dungeon coord] (and (has-location? dungeon coord) (blocked? dungeon coord))))
+
+(defn and-reduce [pred list]
+  (reduce (fn [a b] (and a b)) true (map pred list)))
+
+(defn wall-buffer? [dungeon current-coord new-coord direction]
+  (let [other-dirs (difference (apply hash-set (keys dirs)) #{(opposite-dirs direction)})]
+    (and-reduce (fn [dir] (exists-and-blocked? dungeon (add-points (dirs dir) new-coord))) other-dirs)))
+
+; BROKEN
+(defn wall-on-sides? [dungeon current-coord new-coord direction]
+  (let [perp-directions (perp-dirs direction)
+        first-direction (first perp-directions)
+        second-direction (second perp-directions)
+        first-coord (add-points (dirs first-direction) new-coord)
+        second-coord (add-points (dirs second-direction) new-coord)]
+  (and (exists-and-blocked? dungeon new-coord)
+       (blocked? dungeon first-coord)
+       (blocked? dungeon second-coord))))
+
+
+; steps through the dungeon, starting at current-coord
+; locations will only be visited if
+; (predicate dungeon current-coord new-coord direction) is true
+(defn tunnel [dungeon current-coord pred]
   (loop [new-dungeon (remove-thing dungeon current-coord :wall)
          directions (keys dirs)]
     (let [direction (first directions)
           new-coord (add-points (dirs direction) current-coord)]
       (if direction
-        (if (and (has-location? new-dungeon new-coord) (blocked? new-dungeon new-coord))
-          (recur (tunnel new-dungeon new-coord) (next directions))
+        (if (pred new-dungeon current-coord new-coord direction)
+          (recur (tunnel new-dungeon new-coord pred) (next directions))
           (recur new-dungeon (next directions)))
         new-dungeon))))
 
