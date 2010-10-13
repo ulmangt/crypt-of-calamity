@@ -124,6 +124,13 @@
         new-location (assoc location :things new-things)]
     (assoc dungeon coords new-location)))
 
+(defn remove-thing [dungeon coords thing]
+  (let [location (dungeon coords)
+        things (:things location)
+        new-things (disj things thing)
+        new-location (assoc location :things new-things)]
+    (assoc dungeon coords new-location)))
+
 (defn fill-with-walls [dungeon]
   (loop [coords (keys dungeon)
          new-dungeon dungeon]
@@ -166,7 +173,7 @@
 
 ; return the set of directions which are not blocked
 (defn non-edges [dungeon coords]
-  (difference (keys dirs) (edges dungeon coords)))
+  (difference (apply hash-set (keys dirs)) (apply hash-set (edges dungeon coords))))
 
 ; return whether the location at the specified coordinates is adjacent to any blocked locations
 (defn edge? [dungeon coords]
@@ -192,13 +199,16 @@
   (get-random-element (filter wall? (vals dungeon))))
 
 
-;(defn tunnel [start-coord dungeon]
-;  (loop [new-dungeon dungeon
-;         tunnel-heads (list start-coord)
-;         tunnel-head (first tunnel-heads)]
-;    (if (not tunnel-head)
-;      (let [      
-;      new-dungeon)))
+(defn tunnel [dungeon current-coord]
+  (loop [new-dungeon dungeon
+         directions (keys dirs)]
+    (let [direction (first directions)
+          new-coord (add-points (dirs direction) current-coord)]
+      (if direction
+        (if (and (has-location? dungeon new-coord) (blocked? dungeon new-coord))
+          (recur (tunnel (remove-thing new-dungeon current-coord :wall) new-coord) (next directions))
+          (recur new-dungeon (next directions)))
+        new-dungeon))))
 
 
 
