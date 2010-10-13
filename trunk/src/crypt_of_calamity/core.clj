@@ -235,12 +235,13 @@
 (defn tunnel [dungeon current-coord pred]
   (loop [new-dungeon (remove-thing dungeon current-coord :wall)
          directions dir-set]
-    (let [direction (first directions)
+    (let [direction (get-random-element directions)
+          new-directions (difference directions #{direction})
           new-coord (add-points (dirs direction) current-coord)]
       (if direction
         (if (pred new-dungeon current-coord new-coord direction)
-          (recur (tunnel new-dungeon new-coord pred) (next directions))
-          (recur new-dungeon (next directions)))
+          (recur (tunnel new-dungeon new-coord pred) new-directions)
+          (recur new-dungeon new-directions))
         new-dungeon))))
 
 
