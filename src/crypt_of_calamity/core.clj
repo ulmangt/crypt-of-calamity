@@ -10,11 +10,16 @@
 
 (def rnd (new java.util.Random (. java.lang.System currentTimeMillis)))
 
-;;debugging parts of expressions
+(defn and-reduce [pred list]
+  (reduce (fn [a b] (and a b)) true (map pred list)))
+
+;debugging parts of expressions
 (defmacro dbg [x]
   `(let [x# ~x]
     (println "dbg:" '~x "=" x#)
     x#))
+
+(def dir-set #{ :up :down :left :right })
 
 (def dirs { :up    [ 0  1]
             :down  [ 0 -1]
@@ -180,11 +185,12 @@
 
 ; return the set of directions which are blocked
 (defn edges [dungeon coords]
-  (filter #(not (has-location? dungeon (add-points coords (% dirs)))) (keys dirs)))
+  (let [new-coord (fn [dir] (add-points coords (dir dirs)))]
+    (filter #(blocked? dungeon (new-coord %)) dir-set)))
 
 ; return the set of directions which are not blocked
 (defn non-edges [dungeon coords]
-  (difference (apply hash-set (keys dirs)) (apply hash-set (edges dungeon coords))))
+  (difference dir-set (apply hash-set (edges dungeon coords))))
 
 ; return whether the location at the specified coordinates is adjacent to any blocked locations
 (defn edge? [dungeon coords]
@@ -219,19 +225,8 @@
   (reduce (fn [a b] (and a b)) true (map pred list)))
 
 (defn wall-buffer? [dungeon current-coord new-coord direction]
-  (let [other-dirs (difference (apply hash-set (keys dirs)) #{(opposite-dirs direction)})]
+  (let [other-dirs (difference dir-set #{(opposite-dirs direction)})]
     (and-reduce (fn [dir] (exists-and-blocked? dungeon (add-points (dirs dir) new-coord))) other-dirs)))
-
-; BROKEN
-(defn wall-on-sides? [dungeon current-coord new-coord direction]
-  (let [perp-directions (perp-dirs direction)
-        first-direction (first perp-directions)
-        second-direction (second perp-directions)
-        first-coord (add-points (dirs first-direction) new-coord)
-        second-coord (add-points (dirs second-direction) new-coord)]
-  (and (exists-and-blocked? dungeon new-coord)
-       (blocked? dungeon first-coord)
-       (blocked? dungeon second-coord))))
 
 
 ; steps through the dungeon, starting at current-coord
@@ -239,7 +234,7 @@
 ; (predicate dungeon current-coord new-coord direction) is true
 (defn tunnel [dungeon current-coord pred]
   (loop [new-dungeon (remove-thing dungeon current-coord :wall)
-         directions (keys dirs)]
+         directions dir-set]
     (let [direction (first directions)
           new-coord (add-points (dirs direction) current-coord)]
       (if direction
@@ -262,24 +257,6 @@
           (println (map #(if (blocked? dungeon [% y]) 1 0) (range min-x (inc max-x))))
           (recur (dec y)))))))
 
-; creates a rectangular room - represented by a list of locations
-; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
-;(defn create-room-with-walls
-;  ([width height] (map #(let [x (first %) y (second %)]
-;                             (if (or (= 0 x) (= 0 y) (= (+ width 1) x) (= (+ height 1) y))
-;                                  (struct-map location :coords % :things #{:wall})
-;                                  (struct-map location :coords % :things #{})))
-;                        (cross-join (range (+ 2 width)) (range (+ 2 height)))))
-;  ([] (create-room-with-walls 10 10)))
-
-
-;(defn add-room [dungeon width height]
-;  (concat dungeon 
-;          (create-locations 
-;            (get-random-element 
-;              (filter #(edge? % dungeon)
-;                      (map :coords dungeon)))
-;            width height)))
 
 
 
