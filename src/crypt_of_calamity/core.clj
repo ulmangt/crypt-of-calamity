@@ -200,13 +200,14 @@
 
 
 (defn tunnel [dungeon current-coord]
-  (loop [new-dungeon dungeon
+  (loop [new-dungeon (remove-thing dungeon current-coord :wall)
          directions (keys dirs)]
     (let [direction (first directions)
           new-coord (add-points (dirs direction) current-coord)]
+      (println current-coord directions)
       (if direction
-        (if (and (has-location? dungeon new-coord) (blocked? dungeon new-coord))
-          (recur (tunnel (remove-thing new-dungeon current-coord :wall) new-coord) (next directions))
+        (if (and (has-location? new-dungeon new-coord) (blocked? new-dungeon new-coord))
+          (recur (tunnel new-dungeon new-coord) (next directions))
           (recur new-dungeon (next directions)))
         new-dungeon))))
 
