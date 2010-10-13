@@ -107,7 +107,7 @@
           (cross-join (range x (+ width x))
                       (range y (+ height y))))))
 
-(defn index-locations [width height]
+(defn create-dungeon [width height]
   (let [locations-list (create-locations width height)]
     (apply hash-map (interleave (map :coords locations-list)  locations-list))))
 
@@ -204,7 +204,6 @@
          directions (keys dirs)]
     (let [direction (first directions)
           new-coord (add-points (dirs direction) current-coord)]
-      (println current-coord directions)
       (if direction
         (if (and (has-location? new-dungeon new-coord) (blocked? new-dungeon new-coord))
           (recur (tunnel new-dungeon new-coord) (next directions))
@@ -212,6 +211,18 @@
         new-dungeon))))
 
 
+(defn print-dungeon [dungeon]
+  (let [coords-x (map #(first (:coords %)) (vals dungeon))
+        coords-y (map #(second (:coords %)) (vals dungeon))
+        min-x (apply min coords-x)
+        max-x (apply max coords-x)
+        min-y (apply min coords-y)
+        max-y (apply max coords-y)]
+    (loop [y max-y]
+      (if (<= 0 y)
+        (do
+          (println (map #(if (blocked? dungeon [% y]) 1 0) (range min-x (inc max-x))))
+          (recur (dec y)))))))
 
 ; creates a rectangular room - represented by a list of locations
 ; walls are added to the outside of the room, so a 3 x 3 room returns 5 x 5 locations
