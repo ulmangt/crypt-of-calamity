@@ -1,7 +1,9 @@
 (ns crypt-of-calamity.core
   (:import (java.awt Color Dimension Graphics)
            (javax.swing JPanel JFrame Timer JOptionPane)
-           (java.awt.event ActionListener KeyListener MouseListener))
+           (java.awt.event ActionListener KeyListener MouseListener)
+           (com.wapmx.nativeutils.jniloader NativeLoader DefaultJniExtractor)
+           (java.io File FileOutputStream InputStream OutputStream))
   (:use clojure.contrib.import-static
         clojure.set
         [clojure.contrib.seq-utils :only (includes?)]))
@@ -274,10 +276,34 @@
 			(proxy-super paintComponent g)
 			(render g (. this getWidth) (. this getHeight)))))
 
+(defn copy [^InputStream in ^OutputStream out]
+  (let [tmp (byte-array 8192)]
+    (loop []
+      (let [new-len (. in read tmp)]
+        (if (> new-len 0)
+          (do (. out write tmp 0 new-len)) (recur))))))
+
+(defn extractResource [^InputStream in ^File out-file]
+  (let [^OutputStream out (FileOutputStream. out-file)]
+    (copy in out)
+    (. in close)
+    (. out close)
+    out-file))
+
+(def jni-extractor
+  (proxy [DefaultJniExtractor] []
+    (extractJni [lib-name]
+      (let [mapped-lib (System/mapLibraryName lib-name)
+            ^InputStream in (.. this (getClass) (getClassLoader) (getResourceAsStream mapped-lib))
+            ^File out-file  (File. (. this (getJniDir)) mapped-lib)]
+        (extractResource in out-file)))))
+
 (defn crypt-of-calamity []
 	(let [frame (JFrame. "Crypt of Calamity")
 				dungeon-panel (create-dungeon-panel)]
-		(.addMouseListener dungeon-panel
+    (NativeLoader/setJniExtractor jni-extractor)
+		(NativeLoader/loadLibrary "jogl")
+    (.addMouseListener dungeon-panel
 			(proxy [MouseListener] []
 				(mouseClicked [event]
 					(println (str "clicked")))
